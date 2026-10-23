@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اختبار: الاشتغال بما يفيد</title>
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--ink:#17302a;--mute:#5d726b;--line:#d3ded9;--accent:#1f6f5c;--ok:#1b7a43;--okbg:#e2f3e8;--bad:#a8322d;--badbg:#f9e4e2}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1a17;--card:#17261f;--ink:#e6efeb;--mute:#9bb0a8;--line:#2b4037;--accent:#5fc2a5;--ok:#6fd49a;--okbg:#17382a;--bad:#f08a84;--badbg:#3a1f1d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Naskh Arabic","Amiri","Traditional Arabic",Tahoma,serif;font-size:19px;line-height:1.9;padding:16px}
+main{max-width:680px;margin:0 auto}
+h1{font-size:1.5rem;margin:8px 0 4px}
+.sub{color:var(--mute);font-size:.9rem;margin:0 0 16px}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.meta{color:var(--mute);font-size:.85rem;margin-bottom:6px}
+.q{font-size:1.15rem;font-weight:700;margin:0 0 14px}
+.opt{display:block;width:100%;text-align:right;font:inherit;color:inherit;background:transparent;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:focus-visible,input:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt.ok{background:var(--okbg);border-color:var(--ok)}
+.opt.bad{background:var(--badbg);border-color:var(--bad)}
+input[type=text]{width:100%;font:inherit;color:inherit;background:transparent;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px}
+.btn{font:inherit;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:9px 22px;margin-top:12px;cursor:pointer}
+@media (prefers-color-scheme:dark){.btn{color:#0f1a17}}
+.fb{margin-top:14px;padding:10px 14px;border-radius:10px;font-size:.95rem}
+.fb.ok{background:var(--okbg);color:var(--ok)}
+.fb.bad{background:var(--badbg);color:var(--bad)}
+.score{font-size:2.6rem;font-weight:700;margin:6px 0}
+.rev{border-top:1px solid var(--line);padding:10px 0;font-size:.95rem}
+</style>
+</head>
+<body>
+<main>
+<h1>اختبار: الاشتغال بما يفيد</h1>
+<p class="sub">حديث أبي هريرة رضي الله عنه: «من حسن إسلام المرء تركه ما لا يعنيه»</p>
+<div class="bar"><i id="bar"></i></div>
+<div class="card" id="box" aria-live="polite"></div>
+</main>
+
+<script>
+/* type: mc = اختيار من متعدد | tf = صح/خطأ | txt = إجابة كتابية (تقبل الإجابات القريبة) */
+const Q = [
+ {type:"mc", q:"من راوي هذا الحديث؟", o:["أبو هريرة رضي الله عنه","الحسن بن علي","عمر بن الخطاب","أنس بن مالك"], a:0},
+ {type:"txt", q:"أكمل الحديث: «من حسن إسلام المرء تركه ...»", ans:["ما لا يعنيه"], hint:"ما لا يعنيه"},
+ {type:"mc", q:"ما درجة هذا الحديث؟", o:["صحيح","حسن","ضعيف","موضوع"], a:1},
+ {type:"tf", q:"ترك ما لا يعني المسلم دليل على حسن إسلامه.", a:true},
+ {type:"txt", q:"ما الذي يُترك من «ما لا يعني» بحسب الفائدة الأولى: الأقوال أم الأفعال أم كلاهما؟", ans:["كلاهما","الأقوال والأفعال","الاثنان","الأقوال والافعال معا"], hint:"الأقوال والأفعال معاً"},
+ {type:"mc", q:"أيّ الأمور التالية يدخل فيما «يعني الإنسان» بحسب فوائد الحديث؟", o:["التجسس على الناس","الأمر بالمعروف والنهي عن المنكر","متابعة أخبار الناس","الجدال في كل أمر"], a:1},
+ {type:"tf", q:"الأمر بالمعروف والنهي عن المنكر من التدخل فيما لا يعني الإنسان.", a:false, why:"بل هو مما يعني الإنسان."},
+ {type:"txt", q:"ما نتيجة التدخل فيما لا يعني الإنسان؟", ans:["الشقاق والخصام بين الناس","الخصام","الشقاق","النزاع بين الناس","يؤدي إلى الخصام والشقاق"], hint:"يؤدي إلى الشقاق والخصام بين الناس"},
+ {type:"mc", q:"إلى ماذا يدعو الحديث في أمر الوقت؟", o:["قضاؤه في الراحة فقط","استثماره بما يعني الإنسان ويعود عليه بالفائدة","تركه دون تخطيط","قضاؤه في مراقبة الآخرين"], a:1},
+ {type:"txt", q:"في أي مجالين تكون الفائدة من استثمار الوقت بما يعني الإنسان؟", ans:["الدنيا والآخرة","في الدنيا والآخرة"], hint:"الدنيا والآخرة"},
+ {type:"tf", q:"من فوائد الحديث الحث على الاهتمام بمعالي الأمور.", a:true},
+ {type:"mc", q:"ماذا يعني قولنا «ما لا يعنيه» في سياق الحديث؟", o:["ما لا يخصه ولا فائدة له فيه","ما يحبه الإنسان","ما يخافه","ما يجهله فقط"], a:0},
+ {type:"txt", q:"اذكر فائدة واحدة من فوائد الحديث.", ans:["ترك ما لا يعني","الأمر بالمعروف والنهي عن المنكر","الاهتمام بمعالي الأمور","استثمار الوقت","التدخل فيما لا يعني يؤدي إلى الشقاق","حسن الإسلام","الحث على ترك ما لا يعني"], hint:"مثل: الحث على ترك ما لا يعني، أو استثمار الوقت بما يفيد"}
+];
+
+/* ===== مطابقة تقريبية ===== */
+function norm(s){
+  return s.replace(/[\u064B-\u0652\u0640\u0670]/g,"")
+    .replace(/[إأآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+    .replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g,"").replace(/\bال(?=\S{3,})/g,"")
+    .replace(/\s+/g," ").trim();
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  let p=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){
+    const c=[i];
+    for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));
+    p=c;
+  }
+  return p[n];
+}
+function sim(a,b){const L=Math.max(a.length,b.length);return L?1-lev(a,b)/L:1}
+function close(user,answers){
+  const u=norm(user); if(u.length<2) return false;
+  return answers.some(raw=>{
+    const a=norm(raw);
+    if(u===a||sim(u,a)>=0.72) return true;
+    if(a.length>=3 && u.includes(a)) return true;
+    const aw=a.split(" ").filter(w=>w.length>2), uw=u.split(" ");
+    const hit=aw.filter(w=>uw.some(x=>sim(x,w)>=0.75)).length;
+    return aw.length>0 && hit/aw.length>=0.6;
+  });
+}
+
+/* ===== المنطق ===== */
+let i=0, score=0, wrong=[];
+const box=document.getElementById("box"), bar=document.getElementById("bar");
+const el=h=>{box.innerHTML=h};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const order=Q.map((_,k)=>k).sort(()=>Math.random()-.5);
+
+function show(){
+  if(i>=Q.length) return end();
+  bar.style.width=(i/Q.length*100)+"%";
+  const q=Q[order[i]];
+  let h=`<div class="meta">السؤال ${i+1} من ${Q.length}</div><p class="q">${esc(q.q)}</p>`;
+  if(q.type==="mc") h+=q.o.map((t,k)=>`<button class="opt" data-k="${k}">${esc(t)}</button>`).join("");
+  else if(q.type==="tf") h+=`<button class="opt" data-k="1">صح</button><button class="opt" data-k="0">خطأ</button>`;
+  else h+=`<input type="text" id="t" autocomplete="off" placeholder="اكتب إجابتك هنا"><br><button class="btn" id="chk">تحقق</button>`;
+  h+=`<div id="fb"></div>`;
+  el(h);
+  if(q.type==="txt"){
+    const t=document.getElementById("t"); t.focus();
+    const go=()=>finish(q,close(t.value,q.ans),t.value);
+    document.getElementById("chk").onclick=go;
+    t.onkeydown=e=>{if(e.key==="Enter")go()};
+  } else box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    const k=+b.dataset.k;
+    const isRight=x=>q.type==="mc"?x===q.a:(x===1)===q.a;
+    box.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(isRight(+x.dataset.k))x.classList.add("ok")});
+    if(!isRight(k)) b.classList.add("bad");
+    finish(q,isRight(k),b.textContent);
+  });
+}
+function correct(q){return q.type==="mc"?q.o[q.a]:q.type==="tf"?(q.a?"صح":"خطأ"):q.hint}
+function finish(q,ok,given){
+  if(ok) score++; else wrong.push({q:q.q,a:correct(q),g:given});
+  const t=document.getElementById("t"); if(t) t.disabled=true;
+  const c=document.getElementById("chk"); if(c) c.remove();
+  let msg=ok?"إجابة صحيحة ✓":"الإجابة الصحيحة: "+correct(q);
+  if(q.why) msg+=" — "+q.why;
+  document.getElementById("fb").innerHTML=`<div class="fb ${ok?"ok":"bad"}">${esc(msg)}</div><button class="btn" id="nx">${i+1===Q.length?"النتيجة":"التالي"}</button>`;
+  const nx=document.getElementById("nx"); nx.focus();
+  nx.onclick=()=>{i++;show()};
+}
+function end(){
+  bar.style.width="100%";
+  const p=Math.round(score/Q.length*100);
+  const m=p>=90?"ممتاز، بارك الله فيك":p>=70?"جيد جداً":p>=50?"جيد، راجع الأخطاء":"أعد قراءة الحديث وحاول مجدداً";
+  el(`<div class="meta">انتهى الاختبار</div><div class="score">${score} / ${Q.length}</div><p>${m} (${p}%)</p>`
+   +wrong.map(w=>`<div class="rev"><b>${esc(w.q)}</b><br>إجابتك: ${esc(w.g||"—")}<br>الصحيح: ${esc(w.a)}</div>`).join("")
+   +`<button class="btn" onclick="location.reload()">إعادة الاختبار</button>`);
+}
+show();
+</script>
+</body>
+</html>
